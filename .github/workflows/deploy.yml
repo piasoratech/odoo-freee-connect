@@ -45,14 +45,14 @@ jobs:
             "cd /opt/invoice-generator && python3 invoice_generator.py --dry-run --month prev"
 
       - name: Notify Slack on success
-        if: success()
+        if: success() && secrets.SLACK_WEBHOOK_URL != ''
         run: |
           curl -X POST ${{ secrets.SLACK_WEBHOOK_URL }} \
             -H 'Content-type: application/json' \
             --data '{"text":"✅ invoice-generator デプロイ完了（VPS）"}'
 
       - name: Notify Slack on failure
-        if: failure()
+        if: failure() && secrets.SLACK_WEBHOOK_URL != ''
         run: |
           curl -X POST ${{ secrets.SLACK_WEBHOOK_URL }} \
             -H 'Content-type: application/json' \
