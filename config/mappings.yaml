@@ -1,0 +1,89 @@
+# =============================================
+# 外部システムIDマッピング設定
+# ここに実際のIDを埋めていく
+# =============================================
+
+# ── Odoo 設定 ──────────────────────────────
+odoo:
+  partners:
+    ganbaru_gym:
+      # Odoo上の取引先名（完全一致で検索に使う）
+      name: "ganbaru gym"
+      # OdooパートナーID: Odoo > 取引先 > 対象取引先を開いてURLの id= の数字
+      # 例: https://odoo.piasoratech.com/web#id=8&...&model=res.partner → 8
+      partner_id: 8
+    atra:
+      name: "アトラ"
+      partner_id: 7
+
+  projects:
+    ganbaru_gym_spot:
+      # Odooのタイムシートプロジェクト名（部分一致で検索）
+      project_name: "ganbaru gymスポットHP"
+      # OdooプロジェクトID: Odoo > プロジェクト > 対象プロジェクトを開いてURLの active_id= の数字
+      # 例: https://odoo.piasoratech.com/web#action=280&active_id=2&model=project.task → 2
+      project_id: 2
+
+  sale_order_lines:
+    # ganbaru gymの固定費明細（freee請求書の品目に直接使われる）
+    # fixed_price: 毎月固定で請求する金額（円）
+    ganbaru_gym:
+      - product_name: "HP運用保守ライトプラン"
+        product_id: 101   # OdooのプロダクトID（現状未使用、参照用）
+        fixed_price: 3000
+      - product_name: "サイト制作費分割"
+        product_id: 102
+        fixed_price: 2000
+    # アトラの単価設定
+    # unit_price: 時間単価（円/時間）
+    atra:
+      - product_name: "システム開発支援"
+        product_id: 203
+        unit_price: 5000
+
+# ── Clockify 設定 ───────────────────────────
+clockify:
+  # workspace_id: curl -H "X-Api-Key: {APIキー}" https://api.clockify.me/api/v1/workspaces
+  # レスポンスの "id" フィールド
+  workspace_id: "660d1993eb8b5f7406d598dc"
+  projects:
+    atra:
+      # project_id: null → ワークスペース全体（全稼働）を集計
+      # 特定プロジェクトだけ集計したい場合は "yyyyyyyyyyyyyyyy" 形式で指定
+      # GET https://api.clockify.me/api/v1/workspaces/{workspace_id}/projects で一覧取得可
+      project_id: null
+      name: "全稼働"
+
+# ── freee 設定 ──────────────────────────────
+freee:
+  # freee事業所ID（確認済み: piasoratech）
+  company_id: 2025558
+
+  partners:
+    # freee取引先ID: freee MCP で確認済み
+    ganbaru_gym:
+      name: "株式会社ganbaru gym"
+      partner_id: 112406481
+    atra:
+      name: "株式会社アトラ"
+      partner_id: 91579551
+
+  account_items:
+    # 勘定科目ID: freee MCP / GET /api/1/account_items で確認済み
+    service_fee:
+      name: "売上高"
+      account_item_id: 324092693
+    spot_work:
+      name: "売上高"              # スポット用も同じ勘定科目
+      account_item_id: 324092693
+
+  tax_codes:
+    # 税区分コード: freee MCP / GET /api/1/taxes/companies/2025558 で確認済み
+    # ※簡易課税のため「課税売上10%」(129) は available:false
+    # 　代わりに「課売上一10%」(130) を使用
+    taxable_10pct: 130            # 課売上一10%（簡易課税用、available:true）
+    tax_free: 23                  # 非課売上（available:true）
+
+  invoice:
+    payment_term_days: 30         # 支払期限: 請求日から何日後か
+    title_template: "{year}年{month}月分 業務委託費"  # 請求書タイトル（{year}/{month}は自動置換）

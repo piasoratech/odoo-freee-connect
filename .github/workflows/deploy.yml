@@ -1,0 +1,59 @@
+name: Deploy to VPS
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Deploy via rsync over SSH
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.VPS_SSH_PRIVATE_KEY }}
+          VPS_HOST: ${{ secrets.VPS_HOST }}
+          VPS_USER: ${{ secrets.VPS_USER }}
+        run: |
+          mkdir -p ~/.ssh
+          echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -H "$VPS_HOST" >> ~/.ssh/known_hosts
+
+          rsync -avz --delete \
+            --exclude='.env' \
+            --exclude='.freee_token.json' \
+            --exclude='__pycache__' \
+            --exclude='.git' \
+            ./ "$VPS_USER@$VPS_HOST:/opt/invoice-generator/"
+
+      - name: Install dependencies on VPS
+        env:
+          VPS_HOST: ${{ secrets.VPS_HOST }}
+          VPS_USER: ${{ secrets.VPS_USER }}
+        run: |
+          ssh "$VPS_USER@$VPS_HOST" \
+            "cd /opt/invoice-generator && pip3 install -r requirements.txt --break-system-packages"
+
+      - name: Smoke test (dry-run)
+        env:
+          VPS_HOST: ${{ secrets.VPS_HOST }}
+          VPS_USER: ${{ secrets.VPS_USER }}
+        run: |
+          ssh "$VPS_USER@$VPS_HOST" \
+            "cd /opt/invoice-generator && python3 invoice_generator.py --dry-run --month prev"
+
+      - name: Notify Slack on success
+        if: success()
+        run: |
+          curl -X POST ${{ secrets.SLACK_WEBHOOK_URL }} \
+            -H 'Content-type: application/json' \
+            --data '{"text":"✅ invoice-generator デプロイ完了（VPS）"}'
+
+      - name: Notify Slack on failure
+        if: failure()
+        run: |
+          curl -X POST ${{ secrets.SLACK_WEBHOOK_URL }} \
+            -H 'Content-type: application/json' \
+            --data '{"text":"🚨 invoice-generator デプロイ失敗！ GitHub Actionsを確認してください"}'
