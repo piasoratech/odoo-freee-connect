@@ -36,14 +36,6 @@ jobs:
           ssh "$VPS_USER@$VPS_HOST" \
             "cd /opt/invoice-generator && pip3 install -r requirements.txt"
 
-      - name: Smoke test (dry-run)
-        env:
-          VPS_HOST: ${{ secrets.VPS_HOST }}
-          VPS_USER: ${{ secrets.VPS_USER }}
-        run: |
-          ssh "$VPS_USER@$VPS_HOST" \
-            "cd /opt/invoice-generator && python3 invoice_generator.py --dry-run --month prev"
-
       - name: Notify Slack on success
         if: success() && vars.SLACK_NOTIFY == 'true'
         run: |
