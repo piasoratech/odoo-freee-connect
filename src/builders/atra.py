@@ -111,7 +111,7 @@ class AtraBuilder:
                 days=freee_cfg["invoice"]["payment_term_days"]
             )
         ).strftime("%Y-%m-%d")
-        title = freee_cfg["invoice"]["title_template"].format(
+        title = freee_cfg["invoice"]["title_templates"]["atra"].format(
             year=year, month=month
         )
 

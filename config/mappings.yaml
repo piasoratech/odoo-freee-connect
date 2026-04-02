@@ -86,4 +86,6 @@ freee:
 
   invoice:
     payment_term_days: 30         # 支払期限: 請求日から何日後か
-    title_template: "{year}年{month}月分 業務委託費"  # 請求書タイトル（{year}/{month}は自動置換）
+    title_templates:
+      ganbaru_gym: "{year}年{month}月分 HP運用保守費用"
+      atra: "{year}年{month}月分 業務委託費"
