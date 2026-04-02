@@ -140,8 +140,8 @@ class FreeeClient:
         for line in lines:
             invoice_lines.append({
                 "description": line["description"],
-                "unit_price": line["unit_price"],
-                "quantity": line["quantity"],
+                "unit_price": str(line["unit_price"]),
+                "quantity": str(line["quantity"]),
                 "account_item_id": line["account_item_id"],
                 "tax_code": line["tax_code"],
             })
