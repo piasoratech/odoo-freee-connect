@@ -19,7 +19,7 @@ odoo:
   projects:
     ganbaru_gym_spot:
       # Odooのタイムシートプロジェクト名（部分一致で検索）
-      project_name: "ganbaru gymスポットHP"
+      project_name: "ganbaru gym"
       # OdooプロジェクトID: Odoo > プロジェクト > 対象プロジェクトを開いてURLの active_id= の数字
       # 例: https://odoo.piasoratech.com/web#action=280&active_id=2&model=project.task → 2
       project_id: 2
