@@ -141,7 +141,8 @@ class FreeeClient:
             invoice_lines.append({
                 "description": line["description"],
                 "unit_price": str(line["unit_price"]),
-                "quantity": str(line["quantity"]),
+                "quantity": float(line["quantity"]),
+                "tax_rate": 10,
                 "account_item_id": line["account_item_id"],
                 "tax_code": line["tax_code"],
             })
@@ -150,15 +151,15 @@ class FreeeClient:
             "company_id": self.company_id,
             "partner_id": partner_id,
             "partner_title": "御中",
-            "issue_date": issue_date,
-            "due_date": due_date,
             "billing_date": issue_date,
-            "title": title,
+            "issue_date": issue_date,
+            "payment_date": due_date,
+            "subject": title,
+            "memo": "",
             "lines": invoice_lines,
-            "invoice_status": "draft",
             "tax_entry_method": "out",
             "tax_fraction": "round",
-            "withholding_tax_entry_method": "without_withholding_tax",
+            "withholding_tax_entry_method": "out",
         }
 
         result = self._request(
