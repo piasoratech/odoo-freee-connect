@@ -1,4 +1,5 @@
 import logging
+from collections import defaultdict
 from datetime import datetime, timedelta
 
 from src.rounding import seconds_to_hours_rounded
@@ -17,6 +18,7 @@ class AtraBuilder:
     def build(self, year: int, month: int, dry_run: bool = False) -> dict:
         """
         アトラの請求書データを構築し、freeeにドラフト作成
+        Clockifyのプロジェクト単位で請求明細を分ける
 
         Returns:
             結果サマリーの辞書
@@ -35,45 +37,70 @@ class AtraBuilder:
             last_day = datetime(year, month + 1, 1) - timedelta(days=1)
         last_day_str = last_day.strftime("%Y-%m-%d")
 
-        # 1. Clockifyから時間エントリを取得
+        # 1. Clockifyからプロジェクト一覧と時間エントリを取得
+        project_map = self.clockify.get_projects()
         entries = self.clockify.get_time_entries(
             project_id, year, month, last_day_str
         )
 
-        # 2. 合計秒数を算出
-        total_seconds = self.clockify.sum_duration_seconds(entries)
+        # 2. プロジェクトIDごとに秒数を集計
+        seconds_by_project = defaultdict(float)
+        for entry in entries:
+            pid = entry.get("projectId") or "__no_project__"
+            duration_str = entry.get("timeInterval", {}).get("duration")
+            if duration_str:
+                import isodate
+                seconds_by_project[pid] += isodate.parse_duration(
+                    duration_str
+                ).total_seconds()
 
-        # 3. 時間換算（小数第2位で四捨五入）
-        billed_hours = seconds_to_hours_rounded(total_seconds)
-        atra_amount = int(billed_hours * unit_price)
+        # 3. プロジェクトごとに請求明細を生成
+        invoice_lines = []
+        total_amount = 0
+        project_summaries = []
 
+        for pid, secs in sorted(seconds_by_project.items()):
+            project_name = project_map.get(pid, "未分類") if pid != "__no_project__" else "未分類"
+            billed_hours = seconds_to_hours_rounded(secs)
+            amount = int(billed_hours * unit_price)
+            total_amount += amount
+
+            invoice_lines.append({
+                "description": f"{project_name} {billed_hours}時間",
+                "unit_price": unit_price,
+                "quantity": float(billed_hours),
+                "account_item_id": freee_cfg["account_items"]["service_fee"]["account_item_id"],
+                "tax_code": freee_cfg["tax_codes"]["taxable_10pct"],
+            })
+            project_summaries.append(
+                f"{project_name}: {billed_hours}h → ¥{amount:,}"
+            )
+            logger.info(
+                "アトラ [%s]: %.0f秒 → %s時間 ¥%d",
+                project_name, secs, billed_hours, amount,
+            )
+
+        total_seconds = sum(seconds_by_project.values())
         logger.info(
-            "アトラ: エントリ %d件 / 合計%.0f秒 → %s時間",
-            len(entries), total_seconds, billed_hours,
+            "アトラ合計: エントリ %d件 / %d件のプロジェクト / 合計¥%d",
+            len(entries), len(invoice_lines), total_amount,
         )
-
-        invoice_lines = [{
-            "description": f"システム開発支援 {billed_hours}時間",
-            "unit_price": unit_price,
-            "quantity": float(billed_hours),
-            "account_item_id": freee_cfg["account_items"]["service_fee"]["account_item_id"],
-            "tax_code": freee_cfg["tax_codes"]["taxable_10pct"],
-        }]
 
         result = {
             "partner": "アトラ",
             "entry_count": len(entries),
             "total_seconds": total_seconds,
-            "billed_hours": str(billed_hours),
+            "project_summaries": project_summaries,
             "unit_price": unit_price,
-            "total_amount": atra_amount,
+            "total_amount": total_amount,
             "invoice_lines": invoice_lines,
             "freee_invoice_id": None,
         }
 
         if dry_run:
             logger.info(
-                "[DRY-RUN] アトラ 請求書: ¥%s", atra_amount
+                "[DRY-RUN] アトラ 請求書: ¥%d (%d明細)",
+                total_amount, len(invoice_lines),
             )
             return result
 

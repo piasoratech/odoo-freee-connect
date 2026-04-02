@@ -117,10 +117,10 @@ def main():
         # --- アトラ 請求書 ---
         atra_builder = AtraBuilder(clockify, freee, mappings)
         atra_result = atra_builder.build(year, month, dry_run=dry_run)
+        for summary in atra_result["project_summaries"]:
+            logger.info("アトラ [%s]", summary)
         logger.info(
-            "アトラ: %s時間 × ¥%s = 合計¥%s%s",
-            atra_result["billed_hours"],
-            atra_result["unit_price"],
+            "アトラ合計: ¥%s%s",
             atra_result["total_amount"],
             f" (freee ID: {atra_result['freee_invoice_id']})"
             if atra_result["freee_invoice_id"] else "",

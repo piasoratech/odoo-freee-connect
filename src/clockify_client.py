@@ -98,6 +98,18 @@ class ClockifyClient:
         )
         return entries
 
+    @retry()
+    def get_projects(self) -> dict:
+        """ワークスペースのプロジェクト一覧を {project_id: project_name} で返す"""
+        resp = requests.get(
+            f"{self.BASE_URL}/workspaces/{self.workspace_id}/projects",
+            headers=self.headers,
+            params={"page-size": 200},
+            timeout=30,
+        )
+        resp.raise_for_status()
+        return {p["id"]: p["name"] for p in resp.json()}
+
     @staticmethod
     def sum_duration_seconds(entries: list) -> float:
         """エントリリストの合計秒数を算出"""
