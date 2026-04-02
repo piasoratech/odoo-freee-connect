@@ -155,7 +155,7 @@ class FreeeClient:
             "issue_date": issue_date,
             "payment_date": due_date,
             "subject": title,
-            "memo": "",
+            "memo": " ",
             "lines": invoice_lines,
             "tax_entry_method": "out",
             "tax_fraction": "round",

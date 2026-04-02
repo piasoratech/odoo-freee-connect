@@ -29,6 +29,7 @@ def main():
         "client_id": CLIENT_ID,
         "redirect_uri": REDIRECT_URI,
         "response_type": "code",
+        "scope": "read write",
     }
     auth_url = f"{AUTH_URL}?{urlencode(params)}"
 
