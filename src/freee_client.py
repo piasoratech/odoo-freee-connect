@@ -35,6 +35,7 @@ def retry(max_attempts=3, backoff_factor=2):
 
 class FreeeClient:
     BASE_URL = "https://api.freee.co.jp"
+    INVOICE_BASE_URL = "https://api.freee.co.jp/iv"
     TOKEN_URL = "https://accounts.secure.freee.co.jp/public_api/token"
 
     def __init__(self, client_id: str, client_secret: str,
@@ -95,9 +96,10 @@ class FreeeClient:
         }
 
     @retry()
-    def _request(self, method: str, path: str, **kwargs) -> dict:
+    def _request(self, method: str, path: str,
+                 base_url: str = None, **kwargs) -> dict:
         """API呼び出し（認証エラー時にトークン自動更新）"""
-        url = f"{self.BASE_URL}{path}"
+        url = f"{base_url or self.BASE_URL}{path}"
         resp = requests.request(
             method, url,
             headers=self._headers(),
@@ -147,15 +149,21 @@ class FreeeClient:
         payload = {
             "company_id": self.company_id,
             "partner_id": partner_id,
+            "partner_title": "御中",
             "issue_date": issue_date,
             "due_date": due_date,
+            "billing_date": issue_date,
             "title": title,
-            "invoice_lines": invoice_lines,
+            "lines": invoice_lines,
             "invoice_status": "draft",
+            "tax_entry_method": "exclusive",
+            "tax_fraction": "round",
+            "withholding_tax_entry_method": "without_withholding_tax",
         }
 
         result = self._request(
-            "POST", "/api/1/invoices",
+            "POST", "/invoices",
+            base_url=self.INVOICE_BASE_URL,
             json=payload
         )
         invoice_id = result.get("invoice", {}).get("id")
