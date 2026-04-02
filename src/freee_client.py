@@ -156,7 +156,7 @@ class FreeeClient:
             "title": title,
             "lines": invoice_lines,
             "invoice_status": "draft",
-            "tax_entry_method": "exclusive",
+            "tax_entry_method": "out",
             "tax_fraction": "round",
             "withholding_tax_entry_method": "without_withholding_tax",
         }
