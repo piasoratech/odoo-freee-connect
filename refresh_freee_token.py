@@ -12,6 +12,7 @@ import sys
 from dotenv import load_dotenv
 
 from src.freee_client import FreeeClient
+from src.notifier import notify
 
 load_dotenv()
 
@@ -34,6 +35,11 @@ def main():
         logger.info("freeeトークンの更新に成功しました")
     except Exception as e:
         logger.error("freeeトークンの更新に失敗: %s", e, exc_info=True)
+        notify(
+            f"freeeトークンの自動更新に失敗しました: {e}\n"
+            f"setup_freee_token.py で再認証してください",
+            level="error",
+        )
         sys.exit(1)
 
 
