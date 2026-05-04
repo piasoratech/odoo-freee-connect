@@ -33,6 +33,7 @@ def main():
         )
         freee.refresh_token()
         logger.info("freeeトークンの更新に成功しました")
+        notify("freeeトークンの自動更新に成功しました", level="info")
     except Exception as e:
         logger.error("freeeトークンの更新に失敗: %s", e, exc_info=True)
         notify(
